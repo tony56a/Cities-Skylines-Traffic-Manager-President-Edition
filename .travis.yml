@@ -3,8 +3,8 @@ solution: "./TLM/TMPE.sln"
 before_install:
   - cd /tmp && curl -L -o Dependencies.tar.gz $DEPENDENCIES_URL
   - ls
-  - mkdir -p /home/travis/build/krzychu124/Cities-Skylines-Traffic-Manager-President-Edition/managed
-  - tar -xzf /tmp/Dependencies.tar.gz -C /home/travis/build/krzychu124/Cities-Skylines-Traffic-Manager-President-Edition/managed
+  - mkdir -p /home/travis/build/krzychu124/Cities-Skylines-Traffic-Manager-President-Edition/TLM/managed
+  - tar -xzf /tmp/Dependencies.tar.gz -C /home/travis/build/krzychu124/Cities-Skylines-Traffic-Manager-President-Edition/TLM/managed
   - cd /home/travis/build/krzychu124/Cities-Skylines-Traffic-Manager-President-Edition
   - ls managed
 script:

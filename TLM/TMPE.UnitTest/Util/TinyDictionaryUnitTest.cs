@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Text;
 using System.Collections.Generic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using TrafficManager.Util;
-using TrafficManager.Traffic;
 using CSUtil.Commons;
 
 namespace TMUnitTest.Util {
-	[TestClass]
+	[TestFixture]
 	public class TinyDictionaryUnitTest {
 		private TinyDictionary<byte, byte> dict0;
 		private TinyDictionary<string, int> dict1;
@@ -41,8 +39,8 @@ namespace TMUnitTest.Util {
 		//
 		#endregion
 
-		[ClassInitialize]
-		public static void InitializeClass(TestContext testContext) {
+		[OneTimeSetUp]
+		public void InitializeClass() {
 			alice = "Alice";
 			bob = "Bob";
 			cedric = "Cedric";
@@ -57,7 +55,7 @@ namespace TMUnitTest.Util {
 			boys = new HashSet<string> { bob, cedric };
 		}
 
-		[TestInitialize()]
+		[SetUp]
 		public void InitializeTest() {
 			dict0 = new TinyDictionary<byte, byte>();
 
@@ -77,14 +75,14 @@ namespace TMUnitTest.Util {
 			dict3.Add(boys, false);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestKeys0() {
 			ICollection<byte> keys = dict0.Keys;
 			Assert.IsNotNull(keys);
 			Assert.AreEqual(0, keys.Count);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestKeys1() {
 			ICollection<string> keys = dict1.Keys;
 			Assert.IsNotNull(keys);
@@ -94,7 +92,7 @@ namespace TMUnitTest.Util {
 			Assert.IsTrue(keys.Contains(cedric));
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestKeys2() {
 			ICollection<string> keys = dict2.Keys;
 			Assert.IsNotNull(keys);
@@ -105,7 +103,7 @@ namespace TMUnitTest.Util {
 			Assert.IsTrue(keys.Contains(dora));
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestKeys3() {
 			ICollection<ICollection<string>> keys = dict3.Keys;
 			Assert.IsNotNull(keys);
@@ -114,14 +112,14 @@ namespace TMUnitTest.Util {
 			Assert.IsTrue(keys.Contains(boys));
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestValues0() {
 			ICollection<byte> values = dict0.Values;
 			Assert.IsNotNull(values);
 			Assert.AreEqual(0, values.Count);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestValues1() {
 			ICollection<int> values = dict1.Values;
 			Assert.IsNotNull(values);
@@ -131,7 +129,7 @@ namespace TMUnitTest.Util {
 			Assert.IsTrue(values.Contains(3));
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestValues2() {
 			ICollection<IList<string>> values = dict2.Values;
 			Assert.IsNotNull(values);
@@ -142,7 +140,7 @@ namespace TMUnitTest.Util {
 			Assert.IsTrue(values.Contains(dorasNicknames));
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestValues3() {
 			ICollection<bool> values = dict3.Values;
 			Assert.IsNotNull(values);
@@ -151,25 +149,28 @@ namespace TMUnitTest.Util {
 			Assert.IsTrue(values.Contains(false));
 		}
 
-		[TestMethod]
-		[ExpectedException(typeof(ArgumentNullException))]
+		[Test]
 		public void TestGetNull() {
-			int val = dict1[null];
+			
+			Assert.Throws<ArgumentNullException>(() => {
+				int val = dict1[null];
+			});
 		}
 
-		[TestMethod]
-		[ExpectedException(typeof(KeyNotFoundException))]
+		[Test]
 		public void TestGetNotFound() {
-			int val = dict1["Santa Claus"];
+			Assert.Throws<KeyNotFoundException>(() => {
+				int val = dict1["Santa Claus"];
+			});
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestGet1() {
 			int val = dict1[cedric];
 			Assert.AreEqual(3, val);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestGet2() {
 			IList<string> val = dict2[alice];
 			Assert.AreEqual(alicesNicknames, val);
@@ -184,44 +185,44 @@ namespace TMUnitTest.Util {
 			Assert.AreEqual(dorasNicknames, val);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestGet3() {
 			bool val = dict3[girls];
 			Assert.IsTrue(val);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestSet0() {
 			dict0[1] = 2;
 			Assert.AreEqual(dict0[1], 2);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestSet1() {
 			dict1["Eugen"] = 42;
 			Assert.AreEqual(dict1["Eugen"], 42);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestSet2() {
 			IList<string> eugensNicknames = new List<string> { "Eugenius" };
 			dict2["Eugen"] = eugensNicknames;
 			Assert.AreEqual(dict2["Eugen"], eugensNicknames);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestSet3() {
 			dict3[girls] = false;
 			Assert.AreEqual(dict3[girls], false);
 			Assert.AreEqual(dict3[boys], false);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestContainsKey0() {
 			Assert.IsFalse(dict0.ContainsKey(0));
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestContainsKey1() {
 			Assert.IsTrue(dict1.ContainsKey(alice));
 			Assert.IsTrue(dict1.ContainsKey(bob));
@@ -229,7 +230,7 @@ namespace TMUnitTest.Util {
 			Assert.IsFalse(dict1.ContainsKey(dora));
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestContainsKey2() {
 			Assert.IsTrue(dict2.ContainsKey(alice));
 			Assert.IsTrue(dict2.ContainsKey(bob));
@@ -238,7 +239,7 @@ namespace TMUnitTest.Util {
 			Assert.IsFalse(dict2.ContainsKey("Eugen"));
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestContainsKey3() {
 			Assert.IsTrue(dict3.ContainsKey(girls));
 			Assert.IsTrue(dict3.ContainsKey(boys));
@@ -246,7 +247,7 @@ namespace TMUnitTest.Util {
 			Assert.IsFalse(dict3.ContainsKey(null));
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestAddRemove() {
 			dict0.Add(1, 5);
 			dict0.Add(5, 1);
@@ -280,7 +281,7 @@ namespace TMUnitTest.Util {
 			Assert.AreEqual(1, dict0[5]);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestTryGetValue1() {
 			int val;
 			Assert.IsTrue(dict1.TryGetValue(bob, out val));
@@ -290,13 +291,13 @@ namespace TMUnitTest.Util {
 			Assert.AreEqual(default(int), val);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestClear() {
 			dict1.Clear();
 			Assert.AreEqual(0, dict1.Count);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestCopyTo() {
 			KeyValuePair<string, IList<string>>[] a = new KeyValuePair<string, IList<string>>[4];
 			dict2.CopyTo(a, 0);
@@ -319,7 +320,7 @@ namespace TMUnitTest.Util {
 			}
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestEnumeration() {
 			int i = 0;
 			bool[] r = new bool[3];
@@ -341,7 +342,7 @@ namespace TMUnitTest.Util {
 			}
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestEnumerationAfterModification() {
 			dict1[alice] = 5;
 
@@ -367,7 +368,7 @@ namespace TMUnitTest.Util {
 			}
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestEnumerationAfterRemoval() {
 			dict1.Remove(alice);
 
@@ -390,7 +391,7 @@ namespace TMUnitTest.Util {
 			}
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestIncrement() {
 			++dict1[alice];
 			Assert.AreEqual(2, dict1[alice]);
@@ -398,7 +399,7 @@ namespace TMUnitTest.Util {
 			Assert.AreEqual(3, dict1[cedric]);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestArithmeticAssignment() {
 			dict1[bob] *= 4;
 			Assert.AreEqual(1, dict1[alice]);
@@ -406,13 +407,13 @@ namespace TMUnitTest.Util {
 			Assert.AreEqual(3, dict1[cedric]);
 		}
 
-		[TestMethod]
-		[ExpectedException(typeof(KeyNotFoundException))]
+		[Test]
+//		[ExpectedException("KeyNotFoundException)"]
 		public void TestArithmeticAssignmentOnNonExistingKey() {
-			dict1[dora]++;
+			Assert.Throws<KeyNotFoundException>(() => dict1[dora]++);
 		}
 
-		[TestMethod]
+		[Test]
 		public void TestNested() {
 			dict4 = new TinyDictionary<ushort, IDictionary<ushort, ArrowDirection>>();
 

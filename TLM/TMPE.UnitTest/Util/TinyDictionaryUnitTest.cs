@@ -1,45 +1,46 @@
 ﻿using System;
 using System.Collections.Generic;
+using CSUtil.Commons;
 using NUnit.Framework;
 using TrafficManager.Util;
-using CSUtil.Commons;
 
 namespace TMUnitTest.Util {
 	[TestFixture]
 	public class TinyDictionaryUnitTest {
-		private TinyDictionary<byte, byte> dict0;
-		private TinyDictionary<string, int> dict1;
-		private TinyDictionary<string, IList<string>> dict2;
-		private TinyDictionary<ICollection<string>, bool> dict3;
-		private TinyDictionary<ushort, IDictionary<ushort, ArrowDirection>> dict4;
+#pragma warning disable SA1132 // Do not combine fields
+        private static string alice, bob, cedric, dora;
+        private static IList<string> alicesNicknames, bobsNicknames, cedricsNicknames, dorasNicknames;
+        private static ICollection<string> girls, boys;
+#pragma warning restore SA1132 // Do not combine fields
+        private TinyDictionary<byte, byte> dict0;
+        private TinyDictionary<string, int> dict1;
+        private TinyDictionary<string, IList<string>> dict2;
+        private TinyDictionary<ICollection<string>, bool> dict3;
+        private TinyDictionary<ushort, IDictionary<ushort, ArrowDirection>> dict4;
 
-		private static string alice, bob, cedric, dora;
-		private static IList<string> alicesNicknames, bobsNicknames, cedricsNicknames, dorasNicknames;
-		private static ICollection<string> girls, boys;
+        #region Zusätzliche Testattribute
+        //
+        // Sie können beim Schreiben der Tests folgende zusätzliche Attribute verwenden:
+        //
+        // Verwenden Sie ClassInitialize, um vor Ausführung des ersten Tests in der Klasse Code auszuführen.
+        // [ClassInitialize()]
+        // public static void MyClassInitialize(TestContext testContext) { }
+        //
+        // Verwenden Sie ClassCleanup, um nach Ausführung aller Tests in einer Klasse Code auszuführen.
+        // [ClassCleanup()]
+        // public static void MyClassCleanup() { }
+        //
+        // Mit TestInitialize können Sie vor jedem einzelnen Test Code ausführen.
+        // [TestInitialize()]
+        // public void MyTestInitialize() { }
+        //
+        // Mit TestCleanup können Sie nach jedem Test Code ausführen.
+        // [TestCleanup()]
+        // public void MyTestCleanup() { }
+        //
+        #endregion
 
-		#region Zusätzliche Testattribute
-		//
-		// Sie können beim Schreiben der Tests folgende zusätzliche Attribute verwenden:
-		//
-		// Verwenden Sie ClassInitialize, um vor Ausführung des ersten Tests in der Klasse Code auszuführen.
-		// [ClassInitialize()]
-		// public static void MyClassInitialize(TestContext testContext) { }
-		//
-		// Verwenden Sie ClassCleanup, um nach Ausführung aller Tests in einer Klasse Code auszuführen.
-		// [ClassCleanup()]
-		// public static void MyClassCleanup() { }
-		//
-		// Mit TestInitialize können Sie vor jedem einzelnen Test Code ausführen. 
-		// [TestInitialize()]
-		// public void MyTestInitialize() { }
-		//
-		// Mit TestCleanup können Sie nach jedem Test Code ausführen.
-		// [TestCleanup()]
-		// public void MyTestCleanup() { }
-		//
-		#endregion
-
-		[OneTimeSetUp]
+        [OneTimeSetUp]
 		public void InitializeClass() {
 			alice = "Alice";
 			bob = "Bob";
@@ -151,7 +152,6 @@ namespace TMUnitTest.Util {
 
 		[Test]
 		public void TestGetNull() {
-			
 			Assert.Throws<ArgumentNullException>(() => {
 				int val = dict1[null];
 			});
@@ -408,7 +408,6 @@ namespace TMUnitTest.Util {
 		}
 
 		[Test]
-//		[ExpectedException("KeyNotFoundException)"]
 		public void TestArithmeticAssignmentOnNonExistingKey() {
 			Assert.Throws<KeyNotFoundException>(() => dict1[dora]++);
 		}

@@ -1,6 +1,6 @@
 ﻿using System;
-using NUnit.Framework;
 using CSUtil.Commons;
+using NUnit.Framework;
 
 namespace TMUnitTest.Util {
 	[TestFixture]

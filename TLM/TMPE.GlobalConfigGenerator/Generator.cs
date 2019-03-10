@@ -10,10 +10,11 @@ using TrafficManager.State;
 namespace GlobalConfigGenerator {
 	class Generator {
 		public const string FILENAME = "TMPE_GlobalConfig.xml";
-		public static int? RushHourParkingSearchRadius { get; private set; } = null;
-		//private static DateTime? rushHourConfigModifiedTime = null;
 		private const string RUSHHOUR_CONFIG_FILENAME = "RushHourOptions.xml";
-		//private static uint lastRushHourConfigCheck = 0;
+
+        public static int? RushHourParkingSearchRadius { get; private set; } = null;
+		// private static DateTime? rushHourConfigModifiedTime = null;
+		// private static uint lastRushHourConfigCheck = 0;
 
 		public static void Main(string[] args) {
 			/*WriteDefaultConfig();
@@ -46,7 +47,7 @@ namespace GlobalConfigGenerator {
 			XmlNode betterParkingNode = root.SelectSingleNode("OptionPanel/data/BetterParking");
 			XmlNode parkingSpaceRadiusNode = root.SelectSingleNode("OptionPanel/data/ParkingSearchRadius");
 
-			string  s = betterParkingNode.InnerText;
+			string s = betterParkingNode.InnerText;
 
 			if ("True".Equals(s)) {
 				RushHourParkingSearchRadius = int.Parse(parkingSpaceRadiusNode.InnerText);

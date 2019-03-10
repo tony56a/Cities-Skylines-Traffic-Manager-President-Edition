@@ -188,4 +188,4 @@ FakesAssemblies/
 /TLM/.vs/TMPE/*
 
 # Game dlls
-managed/
+TLM/dependencies/

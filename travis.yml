@@ -1,8 +1,10 @@
 language: csharp
 solution: "./TLM/TMPE.sln"
-branches:
-  only:
-    - master
-    - stable
+before_install:
+  - cd /tmp && curl -L --silent --output /dev/null -o Dependencies.tar.gz $DEPENDENCIES_URL
+  - mkdir -p /home/travis/build/krzychu124/Cities-Skylines-Traffic-Manager-President-Edition/managed && tar -xzf /tmp/Dependencies.tar.gz -C /home/travis/build/krzychu124/Cities-Skylines-Traffic-Manager-President-Edition/managed
+  - cd krzychu124/Cities-Skylines-Traffic-Manager-President-Edition
+script:
+  - msbuild /p:Configuration=Release /p:TreatWarningsAsErrors="false" /p:PostBuildEvent= ./TLM/TMPE.sln
 notifications:
   - email: false

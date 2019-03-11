@@ -6,7 +6,8 @@ configuration:
 before_build:
 - git submodule update --init --recursive
 - mkdir temp
-- cd tmp && curl -OutFile Dependencies.tar.gz -Uri $DEPENDENCIES_URL
+- cd tmp 
+- curl -Uri $DEPENDENCIES_URL -OutFile Dependencies.tar.gz 
 - mkdir -p C:\projects\cities-skylines-traffic-manager-president-edition\TLM\dependencies
 - tar -xzf tmp\Dependencies.tar.gz -C C:\projects\cities-skylines-traffic-manager-president-edition\TLM\dependencies
 - cd C:\projects\cities-skylines-traffic-manager-president-edition

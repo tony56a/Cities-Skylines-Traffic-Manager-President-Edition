@@ -1,0 +1,11 @@
+version: '{build}'
+image: Visual Studio 2017
+configuration:
+- Debug
+- Release
+before_build:
+- nuget restore
+skip_tags: true
+build:
+  project: ./TLM/TMPE.sln
+  verbosity: minimal

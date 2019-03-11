@@ -4,8 +4,8 @@ configuration:
 - Debug
 - Release
 before_build:
-- nuget restore
+- nuget restore TLM/TMPE.sln
 skip_tags: true
 build:
-  project: ./TLM/TMPE.sln
+  project: TLM/TMPE.sln
   verbosity: minimal

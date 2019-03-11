@@ -4,6 +4,7 @@ configuration:
 - Debug
 - Release
 before_build:
+- git submodule update --init --recursive
 - nuget restore TLM/TMPE.sln
 skip_tags: true
 build:

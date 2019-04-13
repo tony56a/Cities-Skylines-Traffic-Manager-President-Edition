@@ -1,17 +1,12 @@
 ﻿using ColossalFramework;
 using ColossalFramework.Math;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using TrafficManager.Custom.AI;
+using ColossalFramework.UI;
 using TrafficManager.State;
-using TrafficManager.Geometry;
-using TrafficManager.TrafficLight;
-using TrafficManager.Util;
 using UnityEngine;
-using TrafficManager.Manager;
 using CSUtil.Commons;
+using TrafficManager.Geometry.Impl;
 using TrafficManager.Manager.Impl;
 
 namespace TrafficManager.UI.SubTools {
@@ -49,9 +44,14 @@ namespace TrafficManager.UI.SubTools {
 			internal int segmentIndex;
 			internal float radius = 1f;
 			internal Color color;
-			internal List<NodeLaneMarker> connectedMarkers = new List<NodeLaneMarker>();
+			internal List<NodeLaneConnection> connectedMarkers = new List<NodeLaneConnection>();
 			internal NetInfo.LaneType laneType;
 			internal VehicleInfo.VehicleType vehicleType;
+		}
+
+		private class NodeLaneConnection {
+			internal NodeLaneMarker targetMarker;
+			internal Bezier3 bezierArc;
 		}
 
 		public LaneConnectorTool(TrafficManagerTool mainTool) : base(mainTool) {
@@ -77,85 +77,82 @@ namespace TrafficManager.UI.SubTools {
 			//Bounds bounds = new Bounds(Vector3.zero, Vector3.one);
 			Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-			for (uint nodeId = 1; nodeId < NetManager.MAX_NODE_COUNT; ++nodeId) {
-				if (!Constants.ServiceFactory.NetService.IsNodeValid((ushort)nodeId)) {
-					continue;
-				}
+            foreach (KeyValuePair<ushort, List<NodeLaneMarker>> nodeConnections in currentNodeMarkers) {
+                ushort nodeId = nodeConnections.Key;
 
-				// TODO refactor connection class check
-				ItemClass connectionClass = NetManager.instance.m_nodes.m_buffer[nodeId].Info.GetConnectionClass();
-				if (connectionClass == null ||
-					!(connectionClass.m_service == ItemClass.Service.Road || (connectionClass.m_service == ItemClass.Service.PublicTransport &&
-					(connectionClass.m_subService == ItemClass.SubService.PublicTransportTrain ||
-					connectionClass.m_subService == ItemClass.SubService.PublicTransportMetro ||
-					connectionClass.m_subService == ItemClass.SubService.PublicTransportMonorail)))) {
-					continue;
-				}
+                var diff = NetManager.instance.m_nodes.m_buffer[nodeId].m_position - camPos;
+                if (diff.magnitude > TrafficManagerTool.MaxOverlayDistance) {
+                    continue; // do not draw if too distant
+                }
 
-				var diff = NetManager.instance.m_nodes.m_buffer[nodeId].m_position - camPos;
-				if (diff.magnitude > TrafficManagerTool.MaxOverlayDistance)
-					continue; // do not draw if too distant
+                if (!Constants.ServiceFactory.NetService.IsNodeValid(nodeId)) {
+                    continue;
+                }
 
-				List<NodeLaneMarker> nodeMarkers;
-				bool hasMarkers = currentNodeMarkers.TryGetValue((ushort)nodeId, out nodeMarkers);
+                // TODO refactor connection class check
+                ItemClass connectionClass = NetManager.instance.m_nodes.m_buffer[nodeId].Info.GetConnectionClass();
+                if (connectionClass == null ||
+                    !(connectionClass.m_service == ItemClass.Service.Road || (connectionClass.m_service == ItemClass.Service.PublicTransport &&
+                                                                              (connectionClass.m_subService == ItemClass.SubService.PublicTransportTrain ||
+                                                                               connectionClass.m_subService == ItemClass.SubService.PublicTransportMetro ||
+                                                                               connectionClass.m_subService == ItemClass.SubService.PublicTransportMonorail)))) {
+                    continue;
+                }
 
-				if (!viewOnly && GetMarkerSelectionMode() == MarkerSelectionMode.None) {
-					MainTool.DrawNodeCircle(cameraInfo, (ushort)nodeId, DefaultNodeMarkerColor, true);
-				}
+                if (!viewOnly && GetMarkerSelectionMode() == MarkerSelectionMode.None) {
+                    MainTool.DrawNodeCircle(cameraInfo, (ushort)nodeId, DefaultNodeMarkerColor, true);
+                }
 
-				if (hasMarkers) {
-					foreach (NodeLaneMarker laneMarker in nodeMarkers) {
-						if (!Constants.ServiceFactory.NetService.IsLaneValid(laneMarker.laneId)) {
-							continue;
-						}
+                foreach (NodeLaneMarker laneMarker in nodeConnections.Value) {
+                    if (!Constants.ServiceFactory.NetService.IsLaneValid(laneMarker.laneId)) {
+                        continue;
+                    }
 
-						foreach (NodeLaneMarker targetLaneMarker in laneMarker.connectedMarkers) {
-							// render lane connection from laneMarker to targetLaneMarker
-							if (!Constants.ServiceFactory.NetService.IsLaneValid(targetLaneMarker.laneId)) {
-								continue;
-							}
-							RenderLane(cameraInfo, laneMarker.position, targetLaneMarker.position, NetManager.instance.m_nodes.m_buffer[nodeId].m_position, laneMarker.color);
-						}
+                    foreach (NodeLaneConnection targetLaneMarkerConnection in laneMarker.connectedMarkers) {
+                        // render lane connection from laneMarker to targetLaneMarker
+                        if (!Constants.ServiceFactory.NetService.IsLaneValid(targetLaneMarkerConnection.targetMarker.laneId)) {
+                            continue;
+                        }
+                        RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, laneMarker.color, targetLaneMarkerConnection.bezierArc, 0.1f, 0, 0, -1f, 1280f, true, true);
+                    }
 
-						if (!viewOnly && nodeId == SelectedNodeId) {
-							//bounds.center = laneMarker.position;
-							bool markerIsHovered = IsLaneMarkerHovered(laneMarker, ref mouseRay);// bounds.IntersectRay(mouseRay);
+                    if (!viewOnly && nodeId == SelectedNodeId) {
+                        //bounds.center = laneMarker.position;
+                        bool markerIsHovered = IsLaneMarkerHovered(laneMarker, ref mouseRay); // bounds.IntersectRay(mouseRay);
 
-							// draw source marker in source selection mode,
-							// draw target marker (if segment turning angles are within bounds) and selected source marker in target selection mode
-							bool drawMarker = (GetMarkerSelectionMode() == MarkerSelectionMode.SelectSource && laneMarker.isSource) ||
-								(GetMarkerSelectionMode() == MarkerSelectionMode.SelectTarget && (
-								(laneMarker.isTarget &&
-								(laneMarker.vehicleType & selectedMarker.vehicleType) != VehicleInfo.VehicleType.None &&
-								CheckSegmentsTurningAngle(selectedMarker.segmentId, ref netManager.m_segments.m_buffer[selectedMarker.segmentId], selectedMarker.startNode, laneMarker.segmentId, ref netManager.m_segments.m_buffer[laneMarker.segmentId], laneMarker.startNode)
-								) || laneMarker == selectedMarker));
-							// highlight hovered marker and selected marker
-							bool highlightMarker = drawMarker && (laneMarker == selectedMarker || markerIsHovered);
+                        // draw source marker in source selection mode,
+                        // draw target marker (if segment turning angles are within bounds) and selected source marker in target selection mode
+                        bool drawMarker = (GetMarkerSelectionMode() == MarkerSelectionMode.SelectSource && laneMarker.isSource) ||
+                                          (GetMarkerSelectionMode() == MarkerSelectionMode.SelectTarget && (
+                                               (laneMarker.isTarget &&
+                                                (laneMarker.vehicleType & selectedMarker.vehicleType) != VehicleInfo.VehicleType.None &&
+                                                CheckSegmentsTurningAngle(selectedMarker.segmentId, ref netManager.m_segments.m_buffer[selectedMarker.segmentId], selectedMarker.startNode, laneMarker.segmentId, ref netManager.m_segments.m_buffer[laneMarker.segmentId], laneMarker.startNode)
+                                               ) || laneMarker == selectedMarker));
+                        // highlight hovered marker and selected marker
+                        bool highlightMarker = drawMarker && (laneMarker == selectedMarker || markerIsHovered);
 
-							if (drawMarker) {
-								if (highlightMarker) {
-									laneMarker.radius = 2f;
-								} else
-									laneMarker.radius = 1f;
-							} else {
-								markerIsHovered = false;
-							}
+                        if (drawMarker) {
+                            if (highlightMarker) {
+                                laneMarker.radius = 2f;
+                            } else
+                                laneMarker.radius = 1f;
+                        } else {
+                            markerIsHovered = false;
+                        }
 
-							if (markerIsHovered) {
-								/*if (hoveredMarker != sourceLaneMarker)
-									Log._Debug($"Marker @ lane {sourceLaneMarker.laneId} hovered");*/
-								hoveredMarker = laneMarker;
-							}
+                        if (markerIsHovered) {
+                            /*if (hoveredMarker != sourceLaneMarker)
+                                Log._Debug($"Marker @ lane {sourceLaneMarker.laneId} hovered");*/
+                            hoveredMarker = laneMarker;
+                        }
 
-							if (drawMarker) {
-								//DrawLaneMarker(laneMarker, cameraInfo);
-								RenderManager.instance.OverlayEffect.DrawCircle(cameraInfo, laneMarker.color, laneMarker.position, laneMarker.radius, laneMarker.position.y - 100f, laneMarker.position.y + 100f, false, true);
-							}
-						}
-					}
-				}
-			}
-		}
+                        if (drawMarker) {
+                            RenderManager.instance.OverlayEffect.DrawCircle(cameraInfo, laneMarker.color, laneMarker.position, laneMarker.radius, laneMarker.position.y - 100f, laneMarker.position.y + 100f, false, true);
+                        }
+                    }
+                }
+            }
+        }
 
 		private bool IsLaneMarkerHovered(NodeLaneMarker laneMarker, ref Ray mouseRay) {
 			Bounds bounds = new Bounds(Vector3.zero, Vector3.one);
@@ -331,14 +328,16 @@ namespace TrafficManager.UI.SubTools {
 					// select target marker
 					//bool success = false;
 					if (LaneConnectionManager.Instance.RemoveLaneConnection(selectedMarker.laneId, hoveredMarker.laneId, selectedMarker.startNode)) { // try to remove connection
-						selectedMarker.connectedMarkers.Remove(hoveredMarker);
+						selectedMarker.connectedMarkers.Remove(selectedMarker.connectedMarkers.Find((item) => item.targetMarker.segmentId == hoveredMarker.segmentId && item.targetMarker.laneId == hoveredMarker.laneId));
 #if DEBUGCONN
 						if (debug)
 							Log._Debug($"TppLaneConnectorTool: removed lane connection: {selectedMarker.laneId}, {hoveredMarker.laneId}");
 #endif
 						//success = true;
 					} else if (LaneConnectionManager.Instance.AddLaneConnection(selectedMarker.laneId, hoveredMarker.laneId, selectedMarker.startNode)) { // try to add connection
-						selectedMarker.connectedMarkers.Add(hoveredMarker);
+						Bezier3 bezier3 = CalculateBezierConnection(selectedMarker, hoveredMarker);
+						NodeLaneConnection connection = new NodeLaneConnection() {targetMarker = hoveredMarker, bezierArc = bezier3};
+						selectedMarker.connectedMarkers.Add(connection);
 #if DEBUGCONN
 						if (debug)
 							Log._Debug($"TppLaneConnectorTool: added lane connection: {selectedMarker.laneId}, {hoveredMarker.laneId}");
@@ -482,7 +481,7 @@ namespace TrafficManager.UI.SubTools {
 							pos = (Vector3)pos + offset;
 							float terrainY = Singleton<TerrainManager>.instance.SampleDetailHeightSmooth(((Vector3)pos));
 							Vector3 finalPos = new Vector3(((Vector3)pos).x, terrainY, ((Vector3)pos).z);
-
+							
 							nodeMarkers.Add(new NodeLaneMarker() {
 								segmentId = segmentId,
 								laneId = laneId,
@@ -520,12 +519,58 @@ namespace TrafficManager.UI.SubTools {
 					if (!laneMarker2.isTarget)
 						continue;
 
-					if (connections.Contains(laneMarker2.laneId))
-						laneMarker1.connectedMarkers.Add(laneMarker2);
+					if (connections.Contains(laneMarker2.laneId)) {
+						Bezier3 bezier3 = CalculateBezierConnection(laneMarker1, laneMarker2);
+						NodeLaneConnection connection = new NodeLaneConnection() { targetMarker = laneMarker2, bezierArc = bezier3 };
+						laneMarker1.connectedMarkers.Add(connection);
+					}
 				}
 			}
 
 			return nodeMarkers;
+		}
+
+        /// <summary>
+        /// Calculates bezier arc between two markers
+        /// </summary>
+        /// <param name="start">start position marker</param>
+        /// <param name="target">end position marker</param>
+        /// <returns>Bezier arc</returns>
+		private Bezier3 CalculateBezierConnection(NodeLaneMarker start, NodeLaneMarker target) {
+			Bezier3 bezier3;
+			if (start.segmentId != target.segmentId) {
+				Vector3 lDir = NetManager.instance.m_lanes.m_buffer[start.laneId].m_bezier.Tangent(start.startNode ? 0f : 1f);
+				Vector3 tDir = NetManager.instance.m_lanes.m_buffer[target.laneId].m_bezier.Tangent(target.startNode ? 0f : 1f);
+				
+				SegmentEndGeometry segmentEndGeometry = SegmentGeometry.Get(start.segmentId).GetEnd(start.startNode);
+				bool isStraight = segmentEndGeometry.IsStraightSegment(target.segmentId);
+				// straight segments connection
+				if (isStraight) {
+					Vector3 mid = (start.position + target.position) * 0.5f;
+					float distance = Vector2.Distance(start.position, mid);
+					Vector3 n = start.position + ((start.startNode ? -1 : 1) * lDir.normalized * distance * 0.8f);
+					float distance2 = Vector2.Distance(target.position, mid);
+					Vector3 n2 = target.position + ((target.startNode ? -1 : 1) * tDir.normalized * distance2 * 0.8f);
+					bezier3 = new Bezier3(start.position, n, n2, target.position);
+				} else {
+					Vector3 intersectionPoint;
+					ClosestPointsOnTwoLines(out intersectionPoint, start.position, lDir, target.position, tDir);
+				
+					float terrainY = Singleton<TerrainManager>.instance.SampleDetailHeightSmooth(intersectionPoint);
+					intersectionPoint = new Vector3(intersectionPoint.x, terrainY, intersectionPoint.z);
+					bezier3.a = start.position;
+					bezier3.d = target.position;
+					NetSegment.CalculateMiddlePoints(bezier3.a, (intersectionPoint - bezier3.a).normalized, bezier3.d, (intersectionPoint - bezier3.d).normalized, false, false, out bezier3.b, out bezier3.c);
+				}
+			} else {
+				// U-turn connection
+				Vector3 middlePoint = NetManager.instance.m_nodes.m_buffer[start.nodeId].m_position;
+				bezier3.a = start.position;
+				bezier3.d = target.position;
+				NetSegment.CalculateMiddlePoints(bezier3.a, (middlePoint - bezier3.a).normalized, bezier3.d, (middlePoint - bezier3.d).normalized, false, false, out bezier3.b, out bezier3.c);
+			}
+
+			return bezier3;
 		}
 
 		/// <summary>
@@ -571,7 +616,7 @@ namespace TrafficManager.UI.SubTools {
 			bezier.d = end;
 			NetSegment.CalculateMiddlePoints(bezier.a, (middlePoint - bezier.a).normalized, bezier.d, (middlePoint - bezier.d).normalized, false, false, out bezier.b, out bezier.c);
 
-			RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, color, bezier, size, 0, 0, -1f, 1280f, false, true);
+            RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, color, bezier, size, 0, 0, -1f, 1280f, false, true);
 		}
 
 		private bool RayCastSegmentAndNode(out ToolBase.RaycastOutput output) {
@@ -583,6 +628,32 @@ namespace TrafficManager.UI.SubTools {
 			input.m_ignoreTerrain = true;
 
 			return MainTool.DoRayCast(input, out output);
+		}
+		
+		private bool ClosestPointsOnTwoLines(out Vector3 closestPointLine1, Vector3 linePoint1, Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2) {
+ 
+			closestPointLine1 = Vector3.zero;
+ 
+			float a = Vector3.Dot(lineVec1, lineVec1);
+			float b = Vector3.Dot(lineVec1, lineVec2);
+			float e = Vector3.Dot(lineVec2, lineVec2);
+ 
+			float d = (a * e) - (b * b);
+ 
+			//lines are not parallel
+			if(d != 0.0f) {
+ 
+				Vector3 r = linePoint1 - linePoint2;
+				float c = Vector3.Dot(lineVec1, r);
+				float f = Vector3.Dot(lineVec2, r);
+ 
+				float s = ((b * f) - (c * e)) / d;
+ 
+				closestPointLine1 = linePoint1 + (lineVec1 * s);
+ 
+				return true;
+			}
+			return false;
 		}
 
 		private static readonly Color32[] colors = new Color32[]

@@ -99,10 +99,6 @@ namespace TrafficManager.UI.SubTools {
                     continue;
                 }
 
-                if (!viewOnly && GetMarkerSelectionMode() == MarkerSelectionMode.None) {
-                    MainTool.DrawNodeCircle(cameraInfo, (ushort)nodeId, DefaultNodeMarkerColor, true);
-                }
-
                 foreach (NodeLaneMarker laneMarker in nodeConnections.Value) {
                     if (!Constants.ServiceFactory.NetService.IsLaneValid(laneMarker.laneId)) {
                         continue;
@@ -113,7 +109,7 @@ namespace TrafficManager.UI.SubTools {
                         if (!Constants.ServiceFactory.NetService.IsLaneValid(targetLaneMarkerConnection.targetMarker.laneId)) {
                             continue;
                         }
-                        RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, laneMarker.color, targetLaneMarkerConnection.bezierArc, 0.1f, 0, 0, -1f, 1280f, true, true);
+                        RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, laneMarker.color, targetLaneMarkerConnection.bezierArc, 0.1f, 0, 0, -1f, 100f, false, true);
                     }
 
                     if (!viewOnly && nodeId == SelectedNodeId) {
@@ -244,7 +240,7 @@ namespace TrafficManager.UI.SubTools {
 
 			if (GetMarkerSelectionMode() == MarkerSelectionMode.None && HoveredNodeId != 0) {
 				// draw hovered node
-				MainTool.DrawNodeCircle(cameraInfo, HoveredNodeId, Input.GetMouseButton(0));
+				MainTool.DrawNodeCircle(cameraInfo, HoveredNodeId, Input.GetMouseButton(0), true);
 			}
 		}
 

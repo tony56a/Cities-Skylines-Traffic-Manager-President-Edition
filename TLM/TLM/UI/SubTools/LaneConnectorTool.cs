@@ -23,8 +23,8 @@ namespace TrafficManager.UI.SubTools {
 			Forward,
 			Backward
 		}
-
-		private static readonly Color DefaultNodeMarkerColor = new Color(1f, 1f, 1f, 0.4f);
+        
+        private static readonly Color32 TargetMarkerColor = new Color32(255, 255, 255, 255); 
 		private NodeLaneMarker selectedMarker = null;
 		private NodeLaneMarker hoveredMarker = null;
 		private Dictionary<ushort, List<NodeLaneMarker>> currentNodeMarkers;
@@ -475,7 +475,7 @@ namespace TrafficManager.UI.SubTools {
 						if (connManager.GetLaneEndPoint(segmentId, !isEndNode, laneIndex, laneId, laneInfo, out isSource, out isTarget, out pos)) {
 
 							pos = (Vector3)pos + offset;
-							float terrainY = Singleton<TerrainManager>.instance.SampleDetailHeightSmooth(((Vector3)pos));
+							float terrainY = Singleton<TerrainManager>.instance.SampleDetailHeightSmooth((Vector3)pos);
 							Vector3 finalPos = new Vector3(((Vector3)pos).x, terrainY, ((Vector3)pos).z);
 							
 							nodeMarkers.Add(new NodeLaneMarker() {
@@ -485,7 +485,7 @@ namespace TrafficManager.UI.SubTools {
 								startNode = !isEndNode,
 								position = finalPos,
 								secondaryPosition = (Vector3)pos,
-								color = colors[nodeMarkers.Count % colors.Length],
+								color = isTarget ? TargetMarkerColor : colors[nodeMarkers.Count % colors.Length],
 								isSource = isSource,
 								isTarget = isTarget,
 								laneType = laneInfo.m_laneType,
@@ -529,40 +529,40 @@ namespace TrafficManager.UI.SubTools {
         /// <summary>
         /// Calculates bezier arc between two markers
         /// </summary>
-        /// <param name="start">start position marker</param>
-        /// <param name="target">end position marker</param>
+        /// <param name="sourceMarker">start position marker</param>
+        /// <param name="targetMarker">end position marker</param>
         /// <returns>Bezier arc</returns>
-		private Bezier3 CalculateBezierConnection(NodeLaneMarker start, NodeLaneMarker target) {
+		private Bezier3 CalculateBezierConnection(NodeLaneMarker sourceMarker, NodeLaneMarker targetMarker) {
 			Bezier3 bezier3;
-			if (start.segmentId != target.segmentId) {
-				Vector3 lDir = NetManager.instance.m_lanes.m_buffer[start.laneId].m_bezier.Tangent(start.startNode ? 0f : 1f);
-				Vector3 tDir = NetManager.instance.m_lanes.m_buffer[target.laneId].m_bezier.Tangent(target.startNode ? 0f : 1f);
+			if (sourceMarker.segmentId != targetMarker.segmentId) {
+				Vector3 sourceLaneDirection = NetManager.instance.m_lanes.m_buffer[sourceMarker.laneId].m_bezier.Tangent(sourceMarker.startNode ? 0f : 1f);
+				Vector3 targetLaneDirection = NetManager.instance.m_lanes.m_buffer[targetMarker.laneId].m_bezier.Tangent(targetMarker.startNode ? 0f : 1f);
 				
-				SegmentEndGeometry segmentEndGeometry = SegmentGeometry.Get(start.segmentId).GetEnd(start.startNode);
-				bool isStraight = segmentEndGeometry.IsStraightSegment(target.segmentId);
+				SegmentEndGeometry segmentEndGeometry = SegmentGeometry.Get(sourceMarker.segmentId).GetEnd(sourceMarker.startNode);
+				bool isStraight = segmentEndGeometry.IsStraightSegment(targetMarker.segmentId);
 				// straight segments connection
 				if (isStraight) {
-					Vector3 mid = (start.position + target.position) * 0.5f;
-					float distance = Vector2.Distance(start.position, mid);
-					Vector3 n = start.position + ((start.startNode ? -1 : 1) * lDir.normalized * distance * 0.8f);
-					float distance2 = Vector2.Distance(target.position, mid);
-					Vector3 n2 = target.position + ((target.startNode ? -1 : 1) * tDir.normalized * distance2 * 0.8f);
-					bezier3 = new Bezier3(start.position, n, n2, target.position);
+					Vector3 middlePoint = (sourceMarker.position + targetMarker.position) * 0.5f;
+					float sourceMidDistance = Vector2.Distance(sourceMarker.position, middlePoint);
+					Vector3 n = sourceMarker.position + ((sourceMarker.startNode ? -1 : 1) * sourceLaneDirection.normalized * sourceMidDistance * 0.8f);
+					float targetToMiddleDistance = Vector2.Distance(targetMarker.position, middlePoint);
+					Vector3 n2 = targetMarker.position + ((targetMarker.startNode ? -1 : 1) * targetLaneDirection.normalized * targetToMiddleDistance * 0.8f);
+					bezier3 = new Bezier3(sourceMarker.position, n, n2, targetMarker.position);
 				} else {
 					Vector3 intersectionPoint;
-					ClosestPointsOnTwoLines(out intersectionPoint, start.position, lDir, target.position, tDir);
+					ClosestPointsOnTwoLines(out intersectionPoint, sourceMarker.position, sourceLaneDirection, targetMarker.position, targetLaneDirection);
 				
 					float terrainY = Singleton<TerrainManager>.instance.SampleDetailHeightSmooth(intersectionPoint);
-					intersectionPoint = new Vector3(intersectionPoint.x, terrainY, intersectionPoint.z);
-					bezier3.a = start.position;
-					bezier3.d = target.position;
+                    intersectionPoint.y = terrainY;
+					bezier3.a = sourceMarker.position;
+					bezier3.d = targetMarker.position;
 					NetSegment.CalculateMiddlePoints(bezier3.a, (intersectionPoint - bezier3.a).normalized, bezier3.d, (intersectionPoint - bezier3.d).normalized, false, false, out bezier3.b, out bezier3.c);
 				}
 			} else {
 				// U-turn connection
-				Vector3 middlePoint = NetManager.instance.m_nodes.m_buffer[start.nodeId].m_position;
-				bezier3.a = start.position;
-				bezier3.d = target.position;
+				Vector3 middlePoint = NetManager.instance.m_nodes.m_buffer[sourceMarker.nodeId].m_position; // node center position to bend connection line
+				bezier3.a = sourceMarker.position;
+				bezier3.d = targetMarker.position;
 				NetSegment.CalculateMiddlePoints(bezier3.a, (middlePoint - bezier3.a).normalized, bezier3.d, (middlePoint - bezier3.d).normalized, false, false, out bezier3.b, out bezier3.c);
 			}
 

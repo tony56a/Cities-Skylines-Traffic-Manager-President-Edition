@@ -109,7 +109,7 @@ namespace TrafficManager.UI.SubTools {
                         if (!Constants.ServiceFactory.NetService.IsLaneValid(targetLaneMarkerConnection.targetMarker.laneId)) {
                             continue;
                         }
-                        RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, laneMarker.color, targetLaneMarkerConnection.bezierArc, 0.1f, 0, 0, -1f, 100f, false, true);
+                        RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, laneMarker.color, targetLaneMarkerConnection.bezierArc, 0.1f, 0, 0, -1f, 1000f, false, true);
                     }
 
                     if (!viewOnly && nodeId == SelectedNodeId) {

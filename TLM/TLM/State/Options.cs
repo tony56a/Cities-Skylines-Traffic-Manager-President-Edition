@@ -29,7 +29,9 @@ namespace TrafficManager.State {
 		private static UICheckBox tinyMenuToggle = null;
 		private static UICheckBox enableTutorialToggle = null;
 		private static UICheckBox showCompatibilityCheckErrorToggle = null;
-		private static UICheckBox realisticSpeedsToggle = null;
+		private static UICheckBox scanForKnownIncompatibleModsToggle = null;
+		private static UICheckBox ignoreDisabledModsToggle = null;
+		private static UICheckBox individualDrivingStyleToggle = null;
 		private static UIDropDown recklessDriversDropdown = null;
 		private static UICheckBox relaxedBussesToggle = null;
 		private static UICheckBox allRelaxedToggle = null;
@@ -93,7 +95,7 @@ namespace TrafficManager.State {
 		public static bool instantEffects = true;
 		public static int simAccuracy = 0;
 		//public static int laneChangingRandomization = 2;
-		public static bool realisticSpeeds = true;
+		public static bool individualDrivingStyle = true;
 		public static int recklessDrivers = 3;
 		public static bool relaxedBusses = false;
 		public static bool allRelaxed = false;
@@ -155,6 +157,8 @@ namespace TrafficManager.State {
 		public static bool junctionRestrictionsEnabled = true;
 		public static bool turnOnRedEnabled = true;
 		public static bool laneConnectorEnabled = true;
+        public static bool scanForKnownIncompatibleModsEnabled = true;
+        public static bool ignoreDisabledModsEnabled = false;
 
 		public static VehicleRestrictionsAggression vehicleRestrictionsAggression = VehicleRestrictionsAggression.Medium;
 
@@ -227,7 +231,10 @@ namespace TrafficManager.State {
 			overlayTransparencySlider = generalGroup.AddSlider(Translation.GetString("Overlay_transparency") + ":", 0, 90, 5, GlobalConfig.Instance.Main.OverlayTransparency, onOverlayTransparencyChanged) as UISlider;
 			overlayTransparencySlider.parent.Find<UILabel>("Label").width = 500;
 			enableTutorialToggle = generalGroup.AddCheckbox(Translation.GetString("Enable_tutorial_messages"), GlobalConfig.Instance.Main.EnableTutorial, onEnableTutorialsChanged) as UICheckBox;
-			showCompatibilityCheckErrorToggle = generalGroup.AddCheckbox(Translation.GetString("Show_error_message_if_a_mod_incompatibility_is_detected"), GlobalConfig.Instance.Main.ShowCompatibilityCheckErrorMessage, onShowCompatibilityCheckErrorChanged) as UICheckBox;
+			showCompatibilityCheckErrorToggle = generalGroup.AddCheckbox(Translation.GetString("Notify_me_if_there_is_an_unexpected_mod_conflict"), GlobalConfig.Instance.Main.ShowCompatibilityCheckErrorMessage, onShowCompatibilityCheckErrorChanged) as UICheckBox;
+			scanForKnownIncompatibleModsToggle = generalGroup.AddCheckbox(Translation.GetString("Scan_for_known_incompatible_mods_on_startup"), GlobalConfig.Instance.Main.ScanForKnownIncompatibleModsAtStartup, onScanForKnownIncompatibleModsChanged) as UICheckBox;
+			ignoreDisabledModsToggle = generalGroup.AddCheckbox(Translation.GetString("Ignore_disabled_mods"), GlobalConfig.Instance.Main.IgnoreDisabledMods, onIgnoreDisabledModsChanged) as UICheckBox;
+            Indent(ignoreDisabledModsToggle);
 
 			var simGroup = panelHelper.AddGroup(Translation.GetString("Simulation"));
 			simAccuracyDropdown = simGroup.AddDropdown(Translation.GetString("Simulation_accuracy") + ":", new string[] { Translation.GetString("Very_high"), Translation.GetString("High"), Translation.GetString("Medium"), Translation.GetString("Low"), Translation.GetString("Very_Low") }, simAccuracy, onSimAccuracyChanged) as UIDropDown;
@@ -252,7 +259,8 @@ namespace TrafficManager.State {
 
 			recklessDriversDropdown = vehBehaviorGroup.AddDropdown(Translation.GetString("Reckless_driving") + ":", new string[] { Translation.GetString("Path_Of_Evil_(10_%)"), Translation.GetString("Rush_Hour_(5_%)"), Translation.GetString("Minor_Complaints_(2_%)"), Translation.GetString("Holy_City_(0_%)") }, recklessDrivers, onRecklessDriversChanged) as UIDropDown;
 			recklessDriversDropdown.width = 300;
-			realisticSpeedsToggle = vehBehaviorGroup.AddCheckbox(Translation.GetString("Realistic_speeds"), realisticSpeeds, onRealisticSpeedsChanged) as UICheckBox;
+			individualDrivingStyleToggle = vehBehaviorGroup.AddCheckbox(Translation.GetString("Individual_driving_styles"), individualDrivingStyle, onIndividualDrivingStyleChanged) as UICheckBox;
+
 			if (SteamHelper.IsDLCOwned(SteamHelper.DLC.SnowFallDLC)) {
 				strongerRoadConditionEffectsToggle = vehBehaviorGroup.AddCheckbox(Translation.GetString("Road_condition_has_a_bigger_impact_on_vehicle_speed"), strongerRoadConditionEffects, onStrongerRoadConditionEffectsChanged) as UICheckBox;
 			}
@@ -477,9 +485,14 @@ namespace TrafficManager.State {
 		}
 
 		private static void Indent<T>(T component) where T : UIComponent {
-			UIPanel panel = component.parent as UIPanel;
-			panel.autoLayout = false;
-			component.relativePosition += new Vector3(30, 0);
+            UILabel label = component.Find<UILabel>("Label");
+            if (label != null) {
+                label.padding = new RectOffset(22, 0, 0, 0);
+            }
+            UISprite check = component.Find<UISprite>("Unchecked");
+            if (check != null) {
+                check.relativePosition += new Vector3(22.0f, 0);
+            }
 		}
 
 		private static UIButton AddOptionTab(UITabstrip tabStrip, string caption) {
@@ -668,7 +681,24 @@ namespace TrafficManager.State {
 			GlobalConfig.WriteConfig();
 		}
 
-		private static void onInstantEffectsChanged(bool newValue) {
+        private static void onScanForKnownIncompatibleModsChanged(bool newValue) {
+            Log._Debug($"Show incompatible mod checker warnings changed to {newValue}");
+            GlobalConfig.Instance.Main.ScanForKnownIncompatibleModsAtStartup = newValue;
+            if (newValue) {
+                GlobalConfig.WriteConfig();
+            } else {
+                setIgnoreDisabledMods(false);
+                onIgnoreDisabledModsChanged(false);
+            }
+        }
+
+        private static void onIgnoreDisabledModsChanged(bool newValue) {
+            Log._Debug($"Ignore disabled mods changed to {newValue}");
+            GlobalConfig.Instance.Main.IgnoreDisabledMods = newValue;
+            GlobalConfig.WriteConfig();
+        }
+
+        private static void onInstantEffectsChanged(bool newValue) {
 			if (!checkGameLoaded())
 				return;
 
@@ -976,12 +1006,12 @@ namespace TrafficManager.State {
 			realisticPublicTransport = newValue;
 		}
 
-		private static void onRealisticSpeedsChanged(bool value) {
+		private static void onIndividualDrivingStyleChanged(bool value) {
 			if (!checkGameLoaded())
 				return;
 
-			Log._Debug($"realisticSpeeds changed to {value}");
-			realisticSpeeds = value;
+			Log._Debug($"individualDrivingStyle changed to {value}");
+			setIndividualDrivingStyle(value);
 		}
 
 		private static void onDisableDespawningChanged(bool value) {
@@ -1248,10 +1278,12 @@ namespace TrafficManager.State {
 				realisticPublicTransportToggle.isChecked = newValue;
 		}
 
-		public static void setRealisticSpeeds(bool newValue) {
-			realisticSpeeds = newValue;
-			if (realisticSpeedsToggle != null)
-				realisticSpeedsToggle.isChecked = newValue;
+		public static void setIndividualDrivingStyle(bool newValue) {
+			individualDrivingStyle = newValue;
+
+			if (individualDrivingStyleToggle != null) {
+				individualDrivingStyleToggle.isChecked = newValue;
+			}
 		}
 
 		public static void setDisableDespawning(bool value) {
@@ -1459,8 +1491,24 @@ namespace TrafficManager.State {
 				showPathFindStatsToggle.isChecked = value;
 		}
 #endif
+        
+        public static void setScanForKnownIncompatibleMods(bool value) {
+            scanForKnownIncompatibleModsEnabled = value;
+            if (scanForKnownIncompatibleModsToggle != null) {
+                scanForKnownIncompatibleModsToggle.isChecked = value;
+            }
+            if (!value) {
+                setIgnoreDisabledMods(false);
+            }
+        }
 
-		/*internal static int getLaneChangingRandomizationTargetValue() {
+        public static void setIgnoreDisabledMods(bool value) {
+            ignoreDisabledModsEnabled = value;
+            if (ignoreDisabledModsToggle != null) {
+                ignoreDisabledModsToggle.isChecked = value;
+            }
+        }
+        /*internal static int getLaneChangingRandomizationTargetValue() {
 			int ret = 100;
 			switch (laneChangingRandomization) {
 				case 0:
@@ -1482,7 +1530,7 @@ namespace TrafficManager.State {
 			return ret;
 		}*/
 
-		/*internal static float getLaneChangingProbability() {
+        /*internal static float getLaneChangingProbability() {
 			switch (laneChangingRandomization) {
 				case 0:
 					return 0.5f;
@@ -1498,7 +1546,7 @@ namespace TrafficManager.State {
 			return 0.01f;
 		}*/
 
-		internal static int getRecklessDriverModulo() {
+        internal static int getRecklessDriverModulo() {
 			switch (recklessDrivers) {
 				case 0:
 					return 10;
@@ -1510,6 +1558,14 @@ namespace TrafficManager.State {
 					return 10000;
 			}
 			return 10000;
+		}
+
+		/// <summary>
+		/// Determines whether Dynamic Lane Selection (DLS) is enabled.
+		/// </summary>
+		/// <returns></returns>
+		public static bool IsDynamicLaneSelectionActive() {
+			return advancedAI && altLaneSelectionRatio > 0;
 		}
 	}
 }

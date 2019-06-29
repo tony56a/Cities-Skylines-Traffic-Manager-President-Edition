@@ -86,6 +86,12 @@ namespace TrafficManager.Manager.Impl {
 			}
 		}
 
+		public ILanePropManager LanePropManager {
+			get {
+				return Impl.LanePropManager.Instance;
+			}
+		}
+
 		public IGeometryManager GeometryManager {
 			get {
 				return Impl.GeometryManager.Instance;

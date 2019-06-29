@@ -19,6 +19,7 @@ namespace TrafficManager.Manager {
 		IJunctionRestrictionsManager JunctionRestrictionsManager { get; }
 		ILaneArrowManager LaneArrowManager { get; }
 		ILaneConnectionManager LaneConnectionManager { get; }
+		ILanePropManager LanePropManager { get; }
 		IGeometryManager GeometryManager { get; }
 		IOptionsManager OptionsManager { get; }
 		IParkingRestrictionsManager ParkingRestrictionsManager { get; }

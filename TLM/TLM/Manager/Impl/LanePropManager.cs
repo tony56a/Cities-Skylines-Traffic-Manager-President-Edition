@@ -30,6 +30,11 @@ namespace TrafficManager.Manager.Impl
 						{ "50", "50 speed limit" },
 						{ "60", "60 speed limit" },
 						{ "100", "100 speed limit" },
+						{ "23", "speed limit 15" },
+						{ "39", "speed limit 25" },
+						{ "47", "speed limit 30" },
+						{ "70", "speed limit 45" },
+						{ "101", "speed limit 65" },
 				};
 
 				private LanePropManager()
@@ -78,6 +83,27 @@ namespace TrafficManager.Manager.Impl
 				protected override void InternalPrintDebugInfo()
 				{
 						base.InternalPrintDebugInfo();
+
+						IEnumerable<NetInfo> netInfos = Resources.FindObjectsOfTypeAll<NetInfo>().Where(x => (x.m_hasForwardVehicleLanes || x.m_hasBackwardVehicleLanes));
+
+						foreach (NetInfo netInfo in netInfos)
+						{
+								Log._Debug($"NetInfo: {netInfo}");
+								foreach (NetInfo.Lane lane in netInfo.m_lanes)
+								{
+										Log._Debug($" - NetLane Type: {lane.m_laneType.ToString()} Direction: {lane.m_finalDirection}");
+										foreach (NetLaneProps.Prop prop in lane.m_laneProps.m_props)
+										{
+												if(prop.m_finalProp != null)
+												{
+														Log._Debug($"  -- NetLaneProp: {prop.m_finalProp.name}");
+												}
+												
+										} 
+												
+								}
+						}
+
 						foreach (string collectionName in this.speedLimitProps.Keys)
 						{
 								Log._Debug($"Speed Limit Prop Collection: {collectionName}");

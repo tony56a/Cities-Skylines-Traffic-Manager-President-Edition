@@ -144,8 +144,8 @@ namespace TrafficManager {
 
 					// Harmony attribute-driven patching
 					Log.Info($"Performing Harmony attribute-driven patching");
-					HarmonyInst = HarmonyInstance.Create(HARMONY_ID);	
-										
+					HarmonyInst = HarmonyInstance.Create(HARMONY_ID);											
+
 					HarmonyInst.PatchAll(assembly);
 
 					foreach (Type type in assembly.GetTypes()) {

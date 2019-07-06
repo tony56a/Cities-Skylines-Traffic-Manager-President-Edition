@@ -126,6 +126,7 @@
     <Compile Include="Manager\Impl\SegmentEndManager.cs" />
     <Compile Include="Patch\_CommonBuildingAI\SimulationStepPatch.cs" />
     <Compile Include="Patch\_HumanAI\ArriveAtDestinationPatch.cs" />
+    <Compile Include="Patch\_NetLane\PropRenderInstancePatch.cs" />
     <Compile Include="Patch\_NetLane\RenderInstancePatch.cs" />
     <Compile Include="Patch\_RoadBaseAI\GetTrafficLightNodeStatePatch.cs" />
     <Compile Include="Patch\_TrainTrackBaseAI\LevelCrossingSimulationStepPatch.cs" />
@@ -240,6 +241,7 @@
     <Compile Include="State\Flags.cs" />
     <Compile Include="UI\TransportDemandViewMode.cs" />
     <Compile Include="UI\UITransportDemand.cs" />
+    <Compile Include="Util\CustomProp.cs" />
     <Compile Include="Util\GenericObservable.cs" />
     <Compile Include="Util\GenericUnsubscriber.cs" />
     <Compile Include="Util\MathUtil.cs" />

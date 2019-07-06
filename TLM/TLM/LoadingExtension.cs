@@ -212,8 +212,11 @@ namespace TrafficManager {
 			RegisteredManagers = new List<ICustomManager>();
 			DetourInited = false;
 			CustomPathManager = new CustomPathManager();
-
 			RegisterCustomManagers();
+			
+			foreach(IPreLoadManager preloadManager in RegisteredManagers.FindAll(manager => manager is IPreLoadManager)) {
+				preloadManager.PreLoadData();
+			}
 		}
 
 		private void RegisterCustomManagers() {

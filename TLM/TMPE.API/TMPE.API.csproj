@@ -80,6 +80,7 @@
     <Compile Include="Manager\IManagerFactory.cs" />
     <Compile Include="Manager\IOptionsManager.cs" />
     <Compile Include="Manager\IParkingRestrictionsManager.cs" />
+    <Compile Include="Manager\IPreLoadManager.cs" />
     <Compile Include="Manager\IRoutingManager.cs" />
     <Compile Include="Manager\ISegmentEndManager.cs" />
     <Compile Include="Manager\ISpeedLimitManager.cs" />

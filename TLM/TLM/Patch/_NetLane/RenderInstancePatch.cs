@@ -1,18 +1,15 @@
-﻿using ColossalFramework.Math;
-using CSUtil.Commons;
+﻿using CSUtil.Commons;
 using Harmony;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using TrafficManager.Manager.Impl;
-using UnityEngine;
 
 namespace TrafficManager.Patch._NetLane
 {
 		[HarmonyPatch(typeof(NetLane), "RenderInstance")]
 		public static class RenderInstancePatch
 		{
-
 				/// <summary>
 				/// Overrides the PropInfo retrieval method for Netlane.RenderInstancePatch to allow the LanePropManager to override the prop selection
 				/// </summary>

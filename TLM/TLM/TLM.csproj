@@ -126,7 +126,6 @@
     <Compile Include="Manager\Impl\SegmentEndManager.cs" />
     <Compile Include="Patch\_CommonBuildingAI\SimulationStepPatch.cs" />
     <Compile Include="Patch\_HumanAI\ArriveAtDestinationPatch.cs" />
-    <Compile Include="Patch\_NetLane\PropRenderInstancePatch.cs" />
     <Compile Include="Patch\_NetLane\RenderInstancePatch.cs" />
     <Compile Include="Patch\_RoadBaseAI\GetTrafficLightNodeStatePatch.cs" />
     <Compile Include="Patch\_TrainTrackBaseAI\LevelCrossingSimulationStepPatch.cs" />

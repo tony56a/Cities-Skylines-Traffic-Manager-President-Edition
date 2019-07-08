@@ -16,7 +16,6 @@ using UnityEngine;
 namespace TrafficManager.Manager.Impl {
 
 		public class LanePropManager : AbstractCustomManager, ILanePropManager, IPreLoadManager {
-
 				
 				public static readonly LanePropManager Instance = new LanePropManager();
 
@@ -31,10 +30,6 @@ namespace TrafficManager.Manager.Impl {
 				/// All of the speed limit sign props
 				/// </summary>
 				private Dictionary<string, Dictionary<string, PropInfo>> speedLimitProps;
-
-				public Dictionary<string, CustomProp> textures = new Dictionary<string, CustomProp>();
-
-				public PropInfo blah;
 
 				/// <summary>
 				/// The key name for the fallback(vanilla) prop collections
@@ -100,13 +95,13 @@ namespace TrafficManager.Manager.Impl {
 				}
 
 				public void PreLoadData() {
-						Font font = Font.CreateDynamicFontFromOSFont("Electronic Highway Sign", 36);
-						font.RequestCharactersInTexture("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890", 36);
+						Font font = Font.CreateDynamicFontFromOSFont("Arial", 60);
+						font.RequestCharactersInTexture("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890", 60);
 						var fakeObj = new GameObject("Fake faking dynamicsign");
 						var fakeTextMesh = fakeObj.AddComponent<TextMesh>();
 						fakeTextMesh.font = font;
 						fakeTextMesh.GetComponent<Renderer>().material = font.material;
-						fakeTextMesh.fontSize = 36;
+						fakeTextMesh.fontSize = 60;
 						fakeTextMesh.text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 
 						Material fontMat = font.material;
@@ -114,6 +109,7 @@ namespace TrafficManager.Manager.Impl {
 						font.material.mainTexture.MakeReadable();
 						signFont = font;
 						gameObj = fakeObj;
+						gameObj.SetActive(false);
 				}
 
 
@@ -160,7 +156,6 @@ namespace TrafficManager.Manager.Impl {
 						foreach(var propInfo in allPropInfos) {
 								if (propInfo.name.ToLower().Contains("UKR-S Blank".ToLower())) {
 										originalProp = propInfo as PropInfo;
-										blah = propInfo as PropInfo;
 								}
 						}
 									
@@ -169,8 +164,9 @@ namespace TrafficManager.Manager.Impl {
 								return;
 						}
 						Dictionary<string, PropInfo> propCollectionToAdd = new Dictionary<string, PropInfo>();
-						for (int i = 5; i < 140; i += 5) {
-								var propName = "TMPE sign " + i;
+						for (int i = 5; i <= 140; i += 5) {
+								var speedString = i.ToString();
+								var propName = $"TMPE sign {speedString}";
 								GameObject signObj = GameObject.Instantiate<GameObject>(originalProp.gameObject);
 								signObj.SetActive(true);
 								signObj.name = propName;
@@ -180,12 +176,12 @@ namespace TrafficManager.Manager.Impl {
 
 								var newTexture = new Texture2D(material.mainTexture.width, material.mainTexture.height, TextureFormat.ARGB32, false);
 								newTexture.SetPixels(((Texture2D)material.mainTexture).GetPixels());
-								TextureUtil.DrawText(ref newTexture, i.ToString(), signFont, 923, 429, 36);
+
+								TextureUtil.DrawText(ref newTexture, speedString, signFont, 953, 432, 60);
 								material.SetTexture("_MainTex", newTexture);
 								meshRenderer.material = material;
-								textures.Add(propName, new CustomProp(material, originalProp.m_mesh));
 								PrefabCollection<PropInfo>.InitializePrefabs("Custom Assets", replacementProp, null);
-								replacementProp.m_lodRenderDistance = originalProp.m_lodRenderDistance;
+								replacementProp.m_lodRenderDistance = originalProp.m_lodRenderDistance * 2;
 								replacementProp.m_maxRenderDistance = 20000;
 
 								if (replacementProp != null) {

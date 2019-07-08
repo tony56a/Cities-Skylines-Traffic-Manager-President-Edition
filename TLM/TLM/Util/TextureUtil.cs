@@ -72,8 +72,14 @@ namespace TrafficManager.Util {
 						RenderTexture.ReleaseTemporary(rt);
 						fontTx = img2;
 
+						int totalWidth = 0;
+						for (int i = 0; i < cText.Length; i++) {
+								myFont.GetCharacterInfo(cText[i], out ci, size);
+								totalWidth += ci.glyphWidth;
+						}
+
 						int x, y, w, h;
-						int posX = startX;
+						int posX = startX - (totalWidth/2);
 
 						for (int i = 0; i < cText.Length; i++)
 						{
@@ -87,18 +93,23 @@ namespace TrafficManager.Util {
 								Color[] cChar = fontTx.GetPixels(x, y, w, h);
 								for (int row = 0; row < h; ++row)
 								{
-										Array.Reverse(cChar, row * w, w);
+									Array.Reverse(cChar, row * w, w);
 								}
 								Array.Reverse(cChar);
-								var blah = cChar.ToList().ConvertAll<Color32>(pixel => ( pixel.a > 0 ) ? Color.red : Color.white).ToArray();
+								var blah = cChar.ToList().ConvertAll<Color32>(pixel => ( pixel.a > 0 ) ? Color.black : Color.clear).ToArray();
 
-								tx.SetPixels32(posX, startY, w, h, blah);
+								for (int j = 0; j < h; j++) {
+										for (int k = 0; k < w; k++) {
+												var index = ( j * w ) + k;
+												if (blah[index].a > 0) {
+														tx.SetPixel(posX + k, startY + j, blah[index]);
+												}
+										}
+								}
+
 								tx.Apply();
-								posX += ci.advance;
+								posX += ci.glyphWidth;
 						}
-
-						byte[] bytes = tx.EncodeToPNG();
-						File.WriteAllBytes(Application.dataPath + $"/../{sText}.png", bytes);
 
 						return tx;
 				}
